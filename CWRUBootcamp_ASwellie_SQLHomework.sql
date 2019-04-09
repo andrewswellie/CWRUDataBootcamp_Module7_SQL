@@ -52,22 +52,29 @@ SET Full_Name = 'GROUCHO WILLIAMS', first_name = 'GROUCHO'
 WHERE first_name = 'HARPO';
 
 # 5a. You cannot locate the schema of the `address` table. Which query would you use to re-create it?
-CREATE TABLE address (
-	address_id VARCHAR(10),
-    address VARCHAR(100),
-    address2 VARCHAR(100),
-	district VARCHAR(100),
-    city_id INTEGER(10),
-    postal_code INTEGER(10),
-    phone INTEGER(10),
-    location VARCHAR(100),
-    last_update VARCHAR(100)
-    );
+SHOW CREATE TABLE address
+
+# Opened the value of "Create Table" in the character viewer and copied this code out so the table would be exactly the same as the original
+CREATE TABLE `address` (
+  `address_id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
+  `address` varchar(50) NOT NULL,
+  `address2` varchar(50) DEFAULT NULL,
+  `district` varchar(20) NOT NULL,
+  `city_id` smallint(5) unsigned NOT NULL,
+  `postal_code` varchar(10) DEFAULT NULL,
+  `phone` varchar(20) NOT NULL,
+  `location` geometry NOT NULL,
+  `last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`address_id`),
+  KEY `idx_fk_city_id` (`city_id`),
+  SPATIAL KEY `idx_location` (`location`),
+  CONSTRAINT `fk_address_city` FOREIGN KEY (`city_id`) REFERENCES `city` (`city_id`) ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=606 DEFAULT CHARSET=utf8
 
 # 6a. Use `JOIN` to display the first and last names, as well as the address, of each staff member. Use the tables `staff` and `address`:
 SELECT sakila.staff.first_name, sakila.staff.last_name, sakila.address.address, sakila.address.address_id
 FROM sakila.staff
-LEFT JOIN address ON sakila.staff.address_id = sakila.address.address_id;
+LEFT JOIN sakila.address ON sakila.staff.address_id = sakila.address.address_id;
 
 # 6b. Use `JOIN` to display the total amount rung up by each staff member in August of 2005. Use tables `staff` and `payment`.
 SELECT sakila.staff.first_name, sakila.staff.last_name, sakila.payment.payment_date, sakila.payment.amount
@@ -87,6 +94,16 @@ WHERE sakila.payment.payment_date like '2005-08%';
 # Use subqueries to display the titles of movies starting with the letters `K` and `Q` whose language is English.
 
 # 7b. Use subqueries to display all actors who appear in the film `Alone Trip`.
+SELECT * 
+FROM sakila.actor
+WHERE actor_id IN(
+	SELECT actor_id
+    FROM sakila.film_actor
+    WHERE film_id IN(
+		SELECT film_id
+        FROM sakila.film
+        WHERE title = 'Alone Trip'
+));
 
 # 7c. You want to run an email marketing campaign in Canada, for which you will need the names and email addresses of all Canadian customers. Use joins to retrieve this information.
 
@@ -99,10 +116,35 @@ WHERE sakila.payment.payment_date like '2005-08%';
 # 7g. Write a query to display for each store its store ID, city, and country.
 
 # 7h. List the top five genres in gross revenue in descending order. (**Hint**: you may need to use the following tables: category, film_category, inventory, payment, and rental.)
+SELECT sakila.category.name, SUM(sakila.payment.amount) AS gross_revenue 
+FROM sakila.film
+LEFT JOIN sakila.film_category ON sakila.film_category.film_id = sakila.film.film_id
+LEFT JOIN sakila.category ON sakila.film_category.category_id = sakila.category.category_id
+LEFT JOIN sakila.inventory ON sakila.inventory.film_id = sakila.film.film_id
+LEFT JOIN sakila.rental ON sakila.rental.inventory_id = sakila.inventory.inventory_id
+LEFT JOIN sakila.payment ON sakila.payment.rental_id = sakila.rental.rental_id 
+WHERE sakila.payment.amount IS NOT NULL 
+GROUP BY sakila.category.name
+ORDER BY SUM(payment.amount) DESC
+LIMIT 5
 
 # 8a. In your new role as an executive, you would like to have an easy way of viewing the Top five genres by gross revenue. Use the solution from the problem above to create a view. 
 # If you haven't solved 7h, you can substitute another query to create a view.
-
+CREATE VIEW top_five_genres AS (
+	SELECT sakila.category.name, SUM(sakila.payment.amount) AS gross_revenue 
+	FROM sakila.film
+	LEFT JOIN sakila.film_category ON sakila.film_category.film_id = sakila.film.film_id
+	LEFT JOIN sakila.category ON sakila.film_category.category_id = sakila.category.category_id
+	LEFT JOIN sakila.inventory ON sakila.inventory.film_id = sakila.film.film_id
+	LEFT JOIN sakila.rental ON sakila.rental.inventory_id = sakila.inventory.inventory_id
+	LEFT JOIN sakila.payment ON sakila.payment.rental_id = sakila.rental.rental_id 
+	WHERE sakila.payment.amount IS NOT NULL 
+	GROUP BY sakila.category.name
+	ORDER BY SUM(payment.amount) DESC
+	LIMIT 5);
+    
 # 8b. How would you display the view that you created in 8a?
+SELECT * FROM top_five_genres
 
 # 8c. You find that you no longer need the view `top_five_genres`. Write a query to delete it.
+DROP VIEW top_five_genres
