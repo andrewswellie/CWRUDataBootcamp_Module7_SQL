@@ -1,4 +1,4 @@
-# Making Sakilia Work for Me!
+# Making Sakila Work for Me!
 
 * 1a. Display the first and last names of all actors from the table `actor`.
 
