@@ -1,8 +1,4 @@
-## Installation Instructions
-
-* Refer to the [installation guide](Installation.md) to install the necessary files.
-
-## Instructions
+# Making Sakilia Work for Me!
 
 * 1a. Display the first and last names of all actors from the table `actor`.
 
@@ -96,10 +92,3 @@
 'store'
 ```
 
-## Uploading Homework
-
-* To submit this homework using BootCampSpot:
-
-  * Create a GitHub repository.
-  * Upload your .sql file with the completed queries.
-  * Submit a link to your GitHub repo through BootCampSpot.
